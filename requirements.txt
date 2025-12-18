@@ -1,0 +1,8 @@
+streamlit
+pandas
+firebase-admin
+pdfplumber
+beautifulsoup4
+plotly
+xlsxwriter
+openpyxl
