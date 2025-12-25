@@ -1,0 +1,859 @@
+﻿# --- INIT SESSION ---
+init_db()
+load_app_state()
+if 'agrup_sis' not in st.session_state: st.session_state['agrup_sis'] = carregar_agrupamentos_db("SISFLORA")
+if 'agrup_ple' not in st.session_state: st.session_state['agrup_ple'] = carregar_agrupamentos_db("PLENUS")
+if 'vinculos' not in st.session_state: st.session_state['vinculos'] = carregar_vinculos_db()
+if 'cesta_sis' not in st.session_state: st.session_state['cesta_sis'] = []
+if 'cesta_ple' not in st.session_state: st.session_state['cesta_ple'] = []
+if 'input_sis_name' not in st.session_state: st.session_state['input_sis_name'] = ""
+if 'input_ple_name' not in st.session_state: st.session_state['input_ple_name'] = ""
+if 'cnt_sis' not in st.session_state: st.session_state['cnt_sis'] = 0
+if 'cnt_ple' not in st.session_state: st.session_state['cnt_ple'] = 0
+if 'st_df_transf_preview' not in st.session_state: st.session_state['st_df_transf_preview'] = None
+if 'filtros_ativos_transf' not in st.session_state: st.session_state['filtros_ativos_transf'] = []
+
+# --- MENU FLUXO DE TRABALHO ---
+st.title("ðŸŒ² CONFERENCIA ESTOQUE v186")
+st.markdown("### SISFLORA E PLENUSERP")
+
+ordem_menu = [
+    "1. SALDO SISFLORA",
+    "2. SALDO PLENUS",
+    "3. HISTORICO TRANSFORMAÃ‡ÃƒO",
+    "4. DEBITO CONSUMO",
+    "5. GestÃ£o: VÃ­nculos (Admin)",
+    "6. ConferÃªncia & Auditoria"
+]
+
+# Determina Ã­ndice inicial baseado no salvo
+idx_inicial = st.session_state.get('menu_sel_idx', 0)
+if not isinstance(idx_inicial, int) or idx_inicial >= len(ordem_menu): idx_inicial = 0
+
+def on_menu_change():
+    # Salva o indice da opÃ§Ã£o selecionada
+    sel = st.session_state.get('menu_main_nav')
+    if sel in ordem_menu:
+        st.session_state['menu_sel_idx'] = ordem_menu.index(sel)
+    save_app_state()
+
+menu_sel = st.sidebar.radio("Fluxo de Trabalho", ordem_menu, index=idx_inicial, key="menu_main_nav", on_change=on_menu_change)
+st.sidebar.divider()
+st.sidebar.info("ðŸ’¡ Siga a ordem numÃ©rica para o fluxo correto.")
+
+# --- 1. SALDO SISFLORA ---
+if menu_sel == "1. SALDO SISFLORA":
+    st.header("ðŸ“„ SALDO SISFLORA")
+    st.info("Este Ã© o saldo 'estÃ¡tico' (Foto do estoque). Se salvar no banco, escolha a data de referÃªncia.")
+
+    # V183: Trocado tabs por radio para nao resetar ao clicar em botoes
+    op_sis = st.radio("NavegaÃ§Ã£o Sisflora:", ["Ler PDF (Upload)", "Carregar do HistÃ³rico", "Gerenciar / Excluir"],
+                      horizontal=True, label_visibility="collapsed", key="nav_sis_183", on_change=save_app_state)
+    st.divider()
+
+    if op_sis == "Ler PDF (Upload)":
+        f = st.file_uploader("PDF Sisflora (Saldo Atual)", type="pdf", key="up_sisflora")
+        if f:
+            with st.spinner("Lendo PDF..."):
+                st.session_state['df_sisflora'] = extrair_dados_sisflora(f)
+                st.session_state['sis_source'] = 'upload'
+
+        if 'df_sisflora' in st.session_state and not st.session_state['df_sisflora'].empty and st.session_state.get('sis_source') == 'upload':
+            df_s = st.session_state['df_sisflora']
+            st.metric("Volume Total (PDF)", formatar_br(df_s['Volume Disponivel'].sum()))
+
+            with st.expander("ðŸ’¾ Salvar este Saldo no Banco de Dados", expanded=True):
+                data_ref = st.date_input("Data de ReferÃªncia deste Saldo:", value=date.today(), format="DD/MM/YYYY")
+                if st.button("Confirmar Salvamento no BD"):
+                    if salvar_lote_sisflora_db(df_s, data_ref, f.name if f else "Upload"):
+                        st.success(f"Saldo de {data_ref.strftime('%d/%m/%Y')} salvo com sucesso!")
+
+            cols_show = [c for c in ['Codigo', 'Produto', 'Essencia', 'Unidade', 'Volume Disponivel', 'Cat_Auto'] if c in df_s.columns]
+            render_filtered_table(df_s[cols_show], "sis_upload")
+
+    elif op_sis == "Carregar do HistÃ³rico":
+        datas_disp = get_datas_sisflora_disponiveis()
+        if datas_disp:
+            sel_data = st.selectbox("Escolha uma data salva:", datas_disp, format_func=lambda x: x.strftime("%d/%m/%Y"))
+            if st.button("Carregar Saldo desta Data"):
+                st.session_state['df_sisflora'] = carregar_sisflora_data_db(sel_data)
+                st.session_state['sis_source'] = 'history'
+                st.success(f"Carregado saldo de {sel_data.strftime('%d/%m/%Y')} para a memÃ³ria!")
+
+            if 'df_sisflora' in st.session_state and not st.session_state['df_sisflora'].empty:
+                 st.divider()
+                 st.subheader("Dados Carregados na MemÃ³ria:")
+                 render_filtered_table(st.session_state['df_sisflora'], "sis_db")
+        else:
+            st.warning("Nenhum histÃ³rico salvo ainda.")
+
+    elif op_sis == "Gerenciar / Excluir":
+        st.markdown("### ðŸ—‘ï¸ Excluir Saldo do Banco")
+        datas_del = get_datas_sisflora_disponiveis()
+        if datas_del:
+            sel_del = st.selectbox("Selecione data para apagar:", datas_del, format_func=lambda x: x.strftime("%d/%m/%Y"), key="sel_del_sf")
+            if st.button("Apagar Definitivamente", type="primary"):
+                if excluir_sisflora_por_data(sel_del):
+                    st.success("Apagado com sucesso!")
+                    st.rerun()
+        else:
+            st.info("Banco vazio.")
+
+# --- 2. SALDO PLENUS (UPDATED v183) ---
+elif menu_sel == "2. SALDO PLENUS":
+    st.header("ðŸ“‚ SALDO PLENUS")
+
+    # V183: st.radio para persistencia
+    op_ple = st.radio("NavegaÃ§Ã£o Plenus:", ["Ler HTML / Importar", "Carregar do HistÃ³rico", "Gerenciar / Excluir"],
+                      horizontal=True, label_visibility="collapsed", key="nav_ple_183", on_change=save_app_state)
+    st.divider()
+
+    if op_ple == "Ler HTML / Importar":
+        # File Uploader
+        f_plenus = st.file_uploader("Importar HTML Plenus", type=["html", "htm"], key="up_plenus")
+        if f_plenus:
+            with st.spinner("Processando..."):
+                df, erros = extrair_dados_plenus_html(f_plenus.getvalue().decode('utf-8', errors='ignore'), f_plenus.name)
+                st.session_state['df_plenus'] = df
+                st.session_state['lista_erro_plenus'] = erros
+                st.session_state['ple_source'] = 'upload'
+
+        # If data exists (only show in upload tab if source is upload)
+        if 'df_plenus' in st.session_state and not st.session_state['df_plenus'].empty and st.session_state.get('ple_source') == 'upload':
+
+            # BotÃ£o Limpar (Verde) e Alertas
+            c_btn, c_rest = st.columns([1, 4])
+            with c_btn:
+                if st.button("Limpar Plenus", type="primary"):
+                    del st.session_state['df_plenus']
+                    if 'view_plenus' in st.session_state: st.session_state['view_plenus'] = None
+                    st.rerun()
+
+            # Errors display (MOVED UP in v183)
+            if st.session_state.get('lista_erro_plenus'):
+                 with st.expander("âš ï¸ Ver Erros de Leitura (Sem Total) - Estes itens nÃ£o aparecem no saldo oficial", expanded=False):
+                     st.dataframe(pd.DataFrame(st.session_state['lista_erro_plenus']))
+
+            # REFACTOR V183: Use shared dashboard function
+            render_plenus_dashboard(st.session_state['df_plenus'], key_prefix="upload", allow_save=True)
+
+    elif op_ple == "Carregar do HistÃ³rico":
+        # Load History
+        st.markdown("### ðŸ“‚ Carregar Movimentos do Banco")
+        c_h1, c_h2 = st.columns(2)
+        d_ini_h = c_h1.date_input("De:", value=st.session_state['p_dt_ini'], key="hist_p_ini", format="DD/MM/YYYY")
+        d_fim_h = c_h2.date_input("AtÃ©:", value=st.session_state['p_dt_fim'], key="hist_p_fim", format="DD/MM/YYYY")
+        st.session_state['p_dt_ini'] = d_ini_h
+        st.session_state['p_dt_fim'] = d_fim_h
+
+        if st.button("Carregar do HistÃ³rico", key="btn_load_hist_p"):
+            df_hist = carregar_plenus_movimento_db(d_ini_h, d_fim_h)
+            if not df_hist.empty:
+                # AdaptaÃ§Ã£o de colunas para formato esperado
+                df_hist.rename(columns={'tipo_movimento': 'tipo', 'saldo_apos': 'saldo'}, inplace=True)
+                df_hist['data'] = pd.to_datetime(df_hist['data_movimento']).dt.strftime("%d/%m/%Y")
+                # Campos extras
+                if 'categoria' not in df_hist.columns: df_hist['categoria'] = ""
+                df_hist["Item_Completo"] = df_hist["produto"] + " (" + df_hist["categoria"].fillna("") + ")"
+                df_hist["Cat_Auto"] = df_hist["Item_Completo"].apply(detectar_categoria_plenus)
+
+                st.session_state['df_plenus'] = df_hist
+                st.session_state['lista_erro_plenus'] = []
+                st.session_state['ple_source'] = 'history'
+                st.success(f"Carregado {len(df_hist)} registros do banco.")
+                st.rerun()
+            else:
+                st.warning("Nenhum dado encontrado neste perÃ­odo.")
+
+        # FIX V183: Show loaded data in history tab (Identical layout to Upload)
+        if 'df_plenus' in st.session_state and not st.session_state['df_plenus'].empty and st.session_state.get('ple_source') == 'history':
+            st.divider()
+            st.subheader("Dados Carregados do HistÃ³rico")
+
+            # REFACTOR V183: Reuse shared dashboard function (no save button for history view)
+            render_plenus_dashboard(st.session_state['df_plenus'], key_prefix="history", allow_save=False)
+
+    elif op_ple == "Gerenciar / Excluir":
+        # Delete
+        st.markdown("### ðŸ—‘ï¸ Excluir Movimentos")
+        c_d1, c_d2 = st.columns(2)
+        del_ini = c_d1.date_input("InÃ­cio ExclusÃ£o:", key="del_ini_p", format="DD/MM/YYYY")
+        del_fim = c_d2.date_input("Fim ExclusÃ£o:", key="del_fim_p", format="DD/MM/YYYY")
+        if st.button("ðŸ—‘ï¸ Apagar PerÃ­odo (Plenus)", type="primary", key="btn_del_p"):
+            qtde = excluir_periodo_tabela("plenus_historico", "data_movimento", del_ini, del_fim)
+            st.success(f"{qtde} registros apagados.")
+
+# --- 3. HISTORICO TRANSFORMAÃ‡ÃƒO ---
+elif menu_sel == "3. HISTORICO TRANSFORMAÃ‡ÃƒO":
+    st.header("ðŸ”„ HISTÃ“RICO TRANSFORMAÃ‡ÃƒO")
+
+    if st.session_state['view_transf'] is not None and not st.session_state['view_transf'].empty:
+        tab_query, tab_import, tab_manage = st.tabs(["ðŸ“Š Consultar Banco (Ativo)", "ðŸ“¥ Importar Excel", "ðŸ—‘ï¸ Limpar PerÃ­odo"])
+    else:
+        tab_import, tab_query, tab_manage = st.tabs(["ðŸ“¥ Importar Excel", "ðŸ“Š Consultar Banco", "ðŸ—‘ï¸ Limpar PerÃ­odo"])
+
+    with tab_import:
+        uploaded_files = st.file_uploader("Carregar Excel (Transf)", type=["xlsx", "xls"], accept_multiple_files=True, key="up_transf")
+        if uploaded_files:
+            current_file_names = sorted([f.name for f in uploaded_files])
+            if st.session_state['st_df_transf_preview'] is None or st.session_state.get('last_files_transf') != current_file_names:
+                all_dfs = []
+                with st.spinner(f"Processando {len(uploaded_files)} arquivos..."):
+                    for file in uploaded_files:
+                        try:
+                            df_raw = pd.read_excel(file, usecols=COLS_SISTRANSF_EXCEL, dtype=str)
+                            if "Volume Origem" in df_raw.columns:
+                                df_raw["Volume Origem"] = df_raw["Volume Origem"].str.replace(",", ".").astype(float)
+                            if "Volume Gerado" in df_raw.columns:
+                                df_raw["Volume Gerado"] = df_raw["Volume Gerado"].str.replace(",", ".").astype(float)
+                            df_transformed = transform_data_sistransf(df_raw, filename=file.name)
+                            all_dfs.append(df_transformed)
+                        except Exception as e:
+                            st.error(f"Erro ao processar arquivo {file.name}: {e}")
+                if all_dfs:
+                    final_df = pd.concat(all_dfs, ignore_index=True)
+
+                    # Auto Update Dates
+                    df_datas = pd.to_datetime(final_df['data_realizacao'], errors='coerce').dropna()
+                    if not df_datas.empty:
+                        min_d, max_d = df_datas.min().date(), df_datas.max().date()
+                        update_session_dates('t', min_d, max_d)
+                        st.info(f"ðŸ“… Datas ajustadas para: {min_d.strftime('%d/%m/%Y')} a {max_d.strftime('%d/%m/%Y')}")
+
+                    st.session_state['st_df_transf_preview'] = final_df
+                    st.session_state['last_files_transf'] = current_file_names
+                    st.success(f"Processado! {len(final_df)} linhas.")
+
+        if st.session_state['st_df_transf_preview'] is not None:
+            def color_transf(val):
+                if val == "PRODUTO DE ORIGEM": return "color: red; font-weight: bold"
+                if val == "PRODUTO GERADO": return "color: green; font-weight: bold"
+                return ""
+
+            df_prev = st.session_state['st_df_transf_preview'].copy()
+            render_filtered_table(df_prev, "transf_preview")
+
+            if st.button("ðŸ’¾ Salvar TransformaÃ§Ãµes no Banco", key="btn_save_transf"):
+                ins, ext = salvar_lote_smart('transf_historico', 'data_realizacao', st.session_state['st_df_transf_preview'])
+                if ins > 0: st.success(f"âœ… {ins} registros salvos.")
+                if ext > 0: st.warning(f"âš ï¸ {ext} registros ignorados (jÃ¡ existiam).")
+                st.session_state['st_df_transf_preview'] = None
+                st.session_state['last_files_transf'] = None
+                st.rerun()
+
+    with tab_query:
+        c_dt1, c_dt2 = st.columns(2)
+        dt_ini = c_dt1.date_input("De:", value=st.session_state['t_dt_ini'], key="t_dt_ini_w", format="DD/MM/YYYY", on_change=save_app_state)
+        dt_fim = c_dt2.date_input("AtÃ©:", value=st.session_state['t_dt_fim'], key="t_dt_fim_w", format="DD/MM/YYYY", on_change=save_app_state)
+        st.session_state['t_dt_ini'] = dt_ini
+        st.session_state['t_dt_fim'] = dt_fim
+
+        if st.button("Consultar", key="btn_search_transf"):
+            df_banco = carregar_transf_filtrado_db(dt_ini, dt_fim, st.session_state['filtros_ativos_transf'])
+            if not df_banco.empty and 'numero' in df_banco.columns and 'data_realizacao' in df_banco.columns:
+                df_banco = df_banco.sort_values(by=['numero', 'data_realizacao'])
+            st.session_state['view_transf'] = df_banco
+            st.rerun()
+
+        if st.session_state['view_transf'] is not None:
+            render_filtered_table(st.session_state['view_transf'], "transf_view")
+
+    with tab_manage:
+        c_del1, c_del2 = st.columns(2)
+        del_ini = c_del1.date_input("InÃ­cio:", key="del_ini_transf", format="DD/MM/YYYY")
+        del_fim = c_del2.date_input("Fim:", key="del_fim_transf", format="DD/MM/YYYY")
+        if st.button("Apagar PerÃ­odo Transf", type="primary", key="btn_del_transf"):
+            qtde = excluir_periodo_tabela("transf_historico", "data_realizacao", del_ini, del_fim)
+            st.success(f"{qtde} registros removidos.")
+
+# --- 4. DEBITO CONSUMO ---
+elif menu_sel == "4. DEBITO CONSUMO":
+    st.header("ðŸšš DEBITO CONSUMO")
+
+    if st.session_state['view_consumo'] is not None and not st.session_state['view_consumo'].empty:
+        tab_c_view, tab_c_import, tab_c_del = st.tabs(["ðŸ“Š Consultar Banco (Ativo)", "ðŸ“¥ Importar Excel (Multi)", "ðŸ—‘ï¸ Limpar PerÃ­odo"])
+    else:
+        tab_c_import, tab_c_view, tab_c_del = st.tabs(["ðŸ“¥ Importar Excel (Multi)", "ðŸ“Š Consultar Banco", "ðŸ—‘ï¸ Limpar PerÃ­odo"])
+
+    with tab_c_import:
+        uploaded_files = st.file_uploader("Carregue arquivos Excel", type=["xlsx", "csv"], accept_multiple_files=True, key="up_consumo")
+
+        if uploaded_files:
+            try:
+                all_dataframes = []
+                with st.spinner("Lendo e consolidando arquivos..."):
+                    for file in uploaded_files:
+                        df_temp = load_data_consumo_excel(file)
+                        df_temp['_arquivo_origem_temp'] = file.name
+                        all_dataframes.append(df_temp)
+
+                if all_dataframes:
+                    df_loaded = pd.concat(all_dataframes, ignore_index=True)
+                    if 'Data' in df_loaded.columns:
+                        df_loaded = df_loaded.sort_values(by='Data')
+                        # Auto Update Dates
+                        df_datas = pd.to_datetime(df_loaded['Data'], errors='coerce').dropna()
+                        if not df_datas.empty:
+                             min_d, max_d = df_datas.min().date(), df_datas.max().date()
+                             update_session_dates('c', min_d, max_d)
+                             st.info(f"ðŸ“… Datas ajustadas: {min_d.strftime('%d/%m/%Y')} a {max_d.strftime('%d/%m/%Y')}")
+
+                    st.markdown("### PrÃ©-visualizaÃ§Ã£o")
+                    render_filtered_table(df_loaded, "cons_preview")
+
+                    if st.button("ðŸ’¾ CONFIRMAR: Salvar no Banco", key="btn_save_consumo"):
+                        # Mapeamento
+                        df_to_save = pd.DataFrame()
+                        col_data = 'Data' if 'Data' in df_loaded.columns else df_loaded.columns[0]
+                        col_prod = 'Nome Popular' if 'Nome Popular' in df_loaded.columns else 'Produto'
+                        col_vol = 'Quantidade' if 'Quantidade' in df_loaded.columns else 'Volume'
+                        col_motivo = 'Motivo' if 'Motivo' in df_loaded.columns else 'Documento'
+
+                        df_to_save['data_consumo'] = df_loaded.get(col_data, "")
+                        df_to_save['produto'] = df_loaded.get(col_prod, "")
+                        df_to_save['essencia'] = ""
+                        df_to_save['volume'] = df_loaded.get(col_vol, 0)
+                        df_to_save['documento'] = df_loaded.get(col_motivo, "")
+                        df_to_save['arquivo_origem'] = df_loaded['_arquivo_origem_temp']
+
+                        df_json_prep = df_loaded.copy()
+                        if 'Data' in df_json_prep.columns: df_json_prep['Data'] = df_json_prep['Data'].astype(str)
+                        df_to_save['dados_json'] = df_json_prep.apply(lambda x: json.dumps(x.to_dict(), default=str), axis=1)
+
+                        ins, ext = salvar_lote_smart('consumo_historico', 'data_consumo', df_to_save)
+                        if ins > 0: st.success(f"âœ… {ins} salvos.")
+                        if ext > 0: st.warning(f"âš ï¸ {ext} jÃ¡ existiam.")
+                        time.sleep(1)
+                        st.rerun()
+            except Exception as e:
+                st.error(f"Erro: {e}")
+
+    with tab_c_view:
+        d_ini_c = st.date_input("De:", value=st.session_state['c_dt_ini'], key="c_dt_ini_w", format="DD/MM/YYYY", on_change=save_app_state)
+        d_fim_c = st.date_input("AtÃ©:", value=st.session_state['c_dt_fim'], key="c_dt_fim_w", format="DD/MM/YYYY", on_change=save_app_state)
+        st.session_state['c_dt_ini'] = d_ini_c
+        st.session_state['c_dt_fim'] = d_fim_c
+
+        if st.button("Consultar Consumo no Banco", key="btn_search_consumo"):
+            df_c_res = carregar_consumo_filtrado_db(d_ini_c, d_fim_c)
+            st.session_state['view_consumo'] = df_c_res
+            st.rerun()
+
+        if st.session_state['view_consumo'] is not None:
+            render_filtered_table(st.session_state['view_consumo'], "cons_view")
+
+    with tab_c_del:
+        del_ini_c = st.date_input("InÃ­cio:", key="deli_c", format="DD/MM/YYYY")
+        del_fim_c = st.date_input("Fim:", key="delf_c", format="DD/MM/YYYY")
+        if st.button("Apagar PerÃ­odo Consumo", type="primary", key="btn_del_consumo"):
+            qtde = excluir_periodo_tabela("consumo_historico", "data_consumo", del_ini_c, del_fim_c)
+            st.success(f"{qtde} registros apagados.")
+
+# --- 5. GESTÃƒO VÃNCULOS ---
+elif menu_sel == "5. GestÃ£o: VÃ­nculos (Admin)":
+    st.header("âš™ï¸ GestÃ£o de VÃ­nculos e Grupos")
+
+    pend_sis_count = 0
+    pend_ple_count = 0
+    pend_vinc_count = 0
+    if 'df_sisflora' in st.session_state:
+        lista_agrupados = list(st.session_state['agrup_sis'].keys())
+        pend_sis_count = st.session_state['df_sisflora'][~st.session_state['df_sisflora']['Item_Completo'].isin(lista_agrupados)]['Item_Completo'].nunique()
+    if 'df_plenus' in st.session_state:
+        lista_agrupados_p = list(st.session_state['agrup_ple'].keys())
+        # Ensure compatibility with DB
+        if 'Item_Completo' not in st.session_state['df_plenus'].columns:
+             # FIX v181: Match old logic "Produto (Categoria)"
+             st.session_state['df_plenus']['Item_Completo'] = st.session_state['df_plenus']["produto"] + " (" + st.session_state['df_plenus']["categoria"].fillna("") + ")"
+
+        pend_ple_count = st.session_state['df_plenus'][~st.session_state['df_plenus']['Item_Completo'].isin(lista_agrupados_p)]['Item_Completo'].nunique()
+
+    grps_sis = carregar_lista_grupos_db("SISFLORA")
+    grps_vinc = carregar_vinculos_db().values()
+    pend_vinc_count = len([g for g in grps_sis if g not in grps_vinc])
+
+    col_a, col_b, col_c = st.columns(3)
+    col_a.metric("Pend. Sisflora", pend_sis_count)
+    col_b.metric("Pend. Plenus", pend_ple_count)
+    col_c.metric("Sem VÃ­nculo", pend_vinc_count)
+    st.divider()
+
+    admin_mode = st.radio("AÃ§Ã£o:", ["Agrupar Sisflora", "Agrupar Plenus", "Vincular (IA)", "VÃ­nculo Manual", "Gerenciar Grupos"], horizontal=True)
+
+    # ... (MANTIDO ADMIN ORIGINAL) ...
+    if admin_mode == "Agrupar Sisflora":
+        if 'df_sisflora' in st.session_state:
+            c1, c2 = st.columns([2, 1])
+            cat_sel = c1.selectbox("Categoria:", [""] + sorted(st.session_state['df_sisflora']['Cat_Auto'].unique()), key="s_cat_adm")
+            txt_sel = c2.text_input("Pesquisar Nome:", key="s_txt_adm")
+            lista_agrupados = list(st.session_state['agrup_sis'].keys())
+            mask_pend = ~st.session_state['df_sisflora']['Item_Completo'].isin(lista_agrupados)
+            mask_cesta = ~st.session_state['df_sisflora']['Item_Completo'].isin(st.session_state['cesta_sis'])
+            df_pend = st.session_state['df_sisflora'][mask_pend & mask_cesta].copy()
+            if cat_sel: df_pend = df_pend[df_pend['Cat_Auto'] == cat_sel]
+            if txt_sel: df_pend = df_pend[df_pend['Item_Completo'].str.contains(txt_sel, case=False, na=False)]
+            lista_filtrada = sorted(df_pend['Item_Completo'].unique(), key=sort_key_nomes)
+            c_esq, c_dir = st.columns([1, 1])
+            with c_esq:
+                st.markdown(f"#### ðŸ“¡ Radar ({len(lista_filtrada)})")
+                if lista_filtrada:
+                    df_view = pd.DataFrame(lista_filtrada, columns=["Itens"])
+                    event = st.dataframe(df_view, use_container_width=True, height=400, on_select="rerun", selection_mode="single-row", hide_index=True, key=f"rad_sis_{st.session_state['cnt_sis']}")
+                    if event.selection.rows:
+                        item_clicado = df_view.iloc[event.selection.rows[0]]['Itens']
+                        st.session_state['cesta_sis'].append(item_clicado)
+                        st.session_state['cnt_sis'] += 1
+                        st.session_state['input_sis_name'] = gerar_sugestao_nome_primeiro(st.session_state['cesta_sis'], cat_sel, "SISFLORA")
+                        st.rerun()
+            with c_dir:
+                st.markdown(f"#### ðŸ§º Cesta ({len(st.session_state['cesta_sis'])})")
+                cesta_atual = st.multiselect("Itens:", st.session_state['cesta_sis'], default=st.session_state['cesta_sis'], key="ms_cesta_sis")
+                if len(cesta_atual) != len(st.session_state['cesta_sis']):
+                     st.session_state['cesta_sis'] = cesta_atual
+                     st.rerun()
+                st.text_input("Nome do Grupo Final:", key="input_sis_name")
+                st.button("ðŸ’¾ SALVAR GRUPO", key="sav_sis", type="primary", on_click=salvar_sis_click)
+
+    elif admin_mode == "Agrupar Plenus":
+        if 'df_plenus' in st.session_state:
+            if 'Item_Completo' not in st.session_state['df_plenus'].columns:
+                 # FIX v181
+                 st.session_state['df_plenus']['Item_Completo'] = st.session_state['df_plenus']["produto"] + " (" + st.session_state['df_plenus']["categoria"].fillna("") + ")"
+            c1, c2 = st.columns([2, 1])
+            cats_p = sorted(st.session_state['df_plenus']['categoria'].fillna("").unique()) if 'categoria' in st.session_state['df_plenus'].columns else []
+            cat_sel_p = c1.selectbox("Categoria:", [""] + cats_p, key="p_cat_adm")
+            txt_sel_p = c2.text_input("Pesquisar Nome:", key="p_txt_adm")
+            lista_agrupados_p = list(st.session_state['agrup_ple'].keys())
+            mask_pend_p = ~st.session_state['df_plenus']['Item_Completo'].isin(lista_agrupados_p)
+            mask_cesta_p = ~st.session_state['df_plenus']['Item_Completo'].isin(st.session_state['cesta_ple'])
+            df_pend_p = st.session_state['df_plenus'][mask_pend_p & mask_cesta_p].copy()
+            if cat_sel_p: df_pend_p = df_pend_p[df_pend_p['categoria'] == cat_sel_p]
+            if txt_sel_p: df_pend_p = df_pend_p[df_pend_p['Item_Completo'].str.contains(txt_sel_p, case=False, na=False)]
+            lista_filtrada_p = sorted(df_pend_p['Item_Completo'].unique(), key=sort_key_nomes)
+            c_esq, c_dir = st.columns([1, 1])
+            with c_esq:
+                st.markdown(f"#### ðŸ“¡ Radar ({len(lista_filtrada_p)})")
+                if lista_filtrada_p:
+                    df_view_p = pd.DataFrame(lista_filtrada_p, columns=["Itens"])
+                    event_p = st.dataframe(df_view_p, use_container_width=True, height=400, on_select="rerun", selection_mode="single-row", hide_index=True, key=f"rad_ple_{st.session_state['cnt_ple']}")
+                    if event_p.selection.rows:
+                        item_p = df_view_p.iloc[event_p.selection.rows[0]]['Itens']
+                        st.session_state['cesta_ple'].append(item_p)
+                        st.session_state['cnt_ple'] += 1
+                        st.session_state['input_ple_name'] = gerar_sugestao_nome_primeiro(st.session_state['cesta_ple'], cat_sel_p, "PLENUS")
+                        st.rerun()
+            with c_dir:
+                st.markdown(f"#### ðŸ§º Cesta ({len(st.session_state['cesta_ple'])})")
+                cesta_p = st.multiselect("Itens:", st.session_state['cesta_ple'], default=st.session_state['cesta_ple'], key="ms_cesta_ple")
+                if len(cesta_p) != len(st.session_state['cesta_ple']):
+                    st.session_state['cesta_ple'] = cesta_p
+                    st.rerun()
+                st.text_input("Nome do Grupo Final:", key="input_ple_name")
+                st.button("ðŸ’¾ SALVAR GRUPO", key="sav_ple", type="primary", on_click=salvar_ple_click)
+
+    elif admin_mode == "Vincular (IA)":
+        grps_sis = carregar_lista_grupos_db("SISFLORA")
+        grps_ple = carregar_lista_grupos_db("PLENUS")
+        vinculos_atuais = carregar_vinculos_db()
+        with st.expander("ðŸ¤– SugestÃµes Inteligentes de VÃ­nculo", expanded=True):
+            f_cat_ia = st.selectbox("Filtrar por Categoria:", ["TODAS", "TORAS", "SERRADAS", "BENEFICIADAS"], key="sel_cat_ia")
+            if st.button("ðŸ”Ž Buscar SugestÃµes"):
+                with st.spinner(f"Analisando essÃªncia dos nomes ({f_cat_ia})..."):
+                    mapa_cat_sis = get_categorias_dos_grupos("SISFLORA")
+                    mapa_cat_ple = get_categorias_dos_grupos("PLENUS")
+                    pendentes_ple = grps_ple
+                    sugestoes = []
+                    for gp in pendentes_ple:
+                        status_vinc = ""
+                        is_vinculado = gp in vinculos_atuais
+                        if is_vinculado: status_vinc = f"âœ… JÃ VINCULADO A: {vinculos_atuais[gp]}"
+                        cat_p = mapa_cat_ple.get(gp, "OUTROS")
+                        if f_cat_ia != "TODAS":
+                            cat_normal = cat_p
+                            if cat_p in ["TORAS", "TOROS", "TORA"]: cat_normal = "TORAS"
+                            elif "SERRADA" in cat_p: cat_normal = "SERRADAS"
+                            elif "BENEF" in cat_p: cat_normal = "BENEFICIADAS"
+                            if cat_normal != f_cat_ia: continue
+                        if cat_p.endswith('S') and cat_p != "TORAS" and cat_p != "OUTROS": cat_p_norm = cat_p[:-1]
+                        else: cat_p_norm = cat_p
+                        melhor_match = None
+                        maior_score = 0.0
+                        for gs in grps_sis:
+                            cat_s = mapa_cat_sis.get(gs, "OUTROS")
+                            if cat_s.endswith('S') and cat_s != "TORAS" and cat_s != "OUTROS": cat_s_norm = cat_s[:-1]
+                            else: cat_s_norm = cat_s
+                            compativel = False
+                            if cat_p == cat_s: compativel = True
+                            elif cat_p in ["TORAS", "TOROS", "TORA"] and cat_s in ["TORAS", "TOROS", "TORA"]: compativel = True
+                            elif cat_p_norm == cat_s_norm and cat_p != "OUTROS": compativel = True
+                            if compativel:
+                                score = calcular_similaridade_avancada(gp, gs)
+                                if score > 0.65 and score > maior_score:
+                                    maior_score = score
+                                    melhor_match = gs
+                        if melhor_match:
+                            sugestoes.append({
+                                "Plenus": gp,
+                                "Sisflora (Sugerido)": melhor_match,
+                                "Categoria": cat_p,
+                                "Status": status_vinc,
+                                "ConfianÃ§a": f"{maior_score:.0%}",
+                                "Aceitar": False,
+                                "is_locked": is_vinculado
+                            })
+                    st.session_state['sugestoes_ia'] = sugestoes
+            if 'sugestoes_ia' in st.session_state and st.session_state['sugestoes_ia']:
+                df_sug = pd.DataFrame(st.session_state['sugestoes_ia'])
+                if not df_sug.empty:
+                    edited_df = st.data_editor(
+                        df_sug,
+                        column_config={
+                            "Aceitar": st.column_config.CheckboxColumn("Vincular?", help="Marque para confirmar", default=False, disabled="is_locked"),
+                            "Status": st.column_config.TextColumn("Status", help="Indica se jÃ¡ estÃ¡ vinculado", width="medium")
+                        },
+                        disabled=["Plenus", "Sisflora (Sugerido)", "Categoria", "ConfianÃ§a", "Status", "is_locked"],
+                        hide_index=True, use_container_width=True
+                    )
+                    if st.button("âœ… Confirmar VÃ­nculos Selecionados"):
+                        vincular_agora = edited_df[edited_df["Aceitar"] == True]
+                        if not vincular_agora.empty:
+                            count_ok = 0
+                            conn = get_db_connection()
+                            c = conn.cursor()
+                            try:
+                                for index, row in vincular_agora.iterrows():
+                                    c.execute("INSERT OR REPLACE INTO vinculos (grupo_plenus, grupo_sisflora) VALUES (?, ?)", (row['Plenus'], row['Sisflora (Sugerido)']))
+                                    count_ok += 1
+                                conn.commit()
+                                st.success(f"{count_ok} vÃ­nculos criados com sucesso!")
+                                st.session_state['vinculos'] = carregar_vinculos_db()
+                                mask_restantes = edited_df["Aceitar"] == False
+                                restantes = edited_df[mask_restantes].to_dict('records')
+                                st.session_state['sugestoes_ia'] = restantes
+                                st.rerun()
+                            except Exception as e: st.error(f"Erro ao salvar: {e}")
+                            finally: conn.close()
+                        else: st.warning("Nenhum item marcado.")
+                else: st.info(f"Nenhuma sugestÃ£o encontrada para o filtro {f_cat_ia}.")
+
+    elif admin_mode == "VÃ­nculo Manual":
+        grps_sis = carregar_lista_grupos_db("SISFLORA")
+        grps_ple = carregar_lista_grupos_db("PLENUS")
+        vinculos_atuais = carregar_vinculos_db()
+        txt_manual = st.text_input("ðŸ”Ž Pesquisar Nome (nos dois lados):", key="search_manual_both")
+        col_filtro, col_check = st.columns([2, 1])
+        cat_filtro = col_filtro.selectbox("Filtrar Categoria:", ["TODAS", "TORAS", "SERRADAS", "BENEFICIADAS", "OUTROS"], key="sel_cat_manual")
+        ocultar_vinc = col_check.checkbox("Ocultar vinculados", value=True)
+        lista_sis = sorted(grps_sis)
+        lista_ple = sorted(grps_ple)
+        pais_com_vinculo = set(vinculos_atuais.values())
+        lista_sis_visual = []
+        for g in lista_sis:
+            if txt_manual and txt_manual.upper() not in g.upper(): continue
+            mark = "âœ… " if g in pais_com_vinculo else ""
+            lista_sis_visual.append(f"{mark}{g}")
+        lista_ple_visual = []
+        for g in lista_ple:
+            if txt_manual and txt_manual.upper() not in g.upper(): continue
+            mark = "âœ… " if g in vinculos_atuais else ""
+            if ocultar_vinc and mark: continue
+            lista_ple_visual.append(f"{mark}{g}")
+        if cat_filtro != "TODAS":
+            mapa_cat_s = get_categorias_dos_grupos("SISFLORA")
+            mapa_cat_p = get_categorias_dos_grupos("PLENUS")
+            def normalizar_cat(c):
+                if c in ["TORAS", "TOROS", "TORA"]: return "TORAS"
+                if "SERRADA" in c: return "SERRADAS"
+                if "BENEF" in c: return "BENEFICIADAS"
+                return "OUTROS"
+            lista_sis_visual = [g for g in lista_sis_visual if normalizar_cat(mapa_cat_s.get(g.replace("âœ… ", ""), "OUTROS")) == cat_filtro]
+            lista_ple_visual = [g for g in lista_ple_visual if normalizar_cat(mapa_cat_p.get(g.replace("âœ… ", ""), "OUTROS")) == cat_filtro]
+        c_esq, c_dir = st.columns(2)
+        selected_sis = None
+        selected_ple = None
+        with c_esq:
+            st.markdown("**1. Sisflora**")
+            df_s_view = pd.DataFrame(lista_sis_visual, columns=["Grupo Sisflora"])
+            event_s = st.dataframe(df_s_view, use_container_width=True, height=400, on_select="rerun", selection_mode="single-row", hide_index=True, key="grid_sis_manual")
+            if event_s.selection.rows:
+                raw_sis = df_s_view.iloc[event_s.selection.rows[0]]['Grupo Sisflora']
+                selected_sis = raw_sis.replace("âœ… ", "")
+        with c_dir:
+            st.markdown("**2. Plenus**")
+            df_p_view = pd.DataFrame(lista_ple_visual, columns=["Grupo Plenus"])
+            event_p = st.dataframe(df_p_view, use_container_width=True, height=400, on_select="rerun", selection_mode="single-row", hide_index=True, key="grid_ple_manual")
+            if event_p.selection.rows:
+                raw_ple = df_p_view.iloc[event_p.selection.rows[0]]['Grupo Plenus']
+                selected_ple = raw_ple.replace("âœ… ", "")
+        st.divider()
+        if selected_sis and selected_ple:
+            if st.button(f"ðŸ”— Vincular: {selected_ple}  ->  {selected_sis}", type="primary", use_container_width=True):
+                salvar_vinculo_db([selected_ple], selected_sis)
+                st.session_state['vinculos'] = carregar_vinculos_db()
+                st.rerun()
+        else:
+            st.button("Selecione um item de cada lado para vincular", disabled=True, use_container_width=True)
+        st.divider()
+        with st.expander("Ver/Remover VÃ­nculos Existentes"):
+            df_vinc = pd.DataFrame(list(st.session_state['vinculos'].items()), columns=['Plenus', 'Sisflora'])
+            f_edit = st.text_input("Filtrar tabela:", key="filtro_edit_vinc")
+            if f_edit: df_vinc = df_vinc[df_vinc['Plenus'].str.contains(f_edit, case=False) | df_vinc['Sisflora'].str.contains(f_edit, case=False)]
+            c_e1, c_e2 = st.columns([3, 1])
+            with c_e1: st.dataframe(df_vinc, use_container_width=True)
+            with c_e2:
+                to_delete = st.selectbox("Remover:", [""] + sorted(df_vinc['Plenus'].unique()), key="sel_del_vinc")
+                if st.button("ðŸ—‘ï¸ Remover", key="btn_del_vinc"):
+                    if to_delete:
+                        excluir_vinculo_db(to_delete)
+                        st.session_state['vinculos'] = carregar_vinculos_db()
+                        st.rerun()
+
+    elif admin_mode == "Gerenciar Grupos":
+        ger_mode = st.radio("OpÃ§Ã£o:", ["ðŸ—‘ï¸ Excluir/Editar", "ðŸ“Š RelatÃ³rio Geral", "ðŸ›¡ï¸ SeguranÃ§a & Backup"], horizontal=True)
+
+        if ger_mode == "ðŸ›¡ï¸ SeguranÃ§a & Backup":
+            st.markdown("### ðŸ›¡ï¸ Backup de SeguranÃ§a")
+            st.info("Aqui vocÃª pode criar uma cÃ³pia de seguranÃ§a do banco de dados atual.")
+
+            if st.button("ðŸ’¾ Criar Backup Agora"):
+                try:
+                    if not os.path.exists("backups"):
+                        os.makedirs("backups")
+
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    backup_name = f"backups/backup_dados_{timestamp}.db"
+
+                    # Copia o arquivo do banco
+                    shutil.copy2(ARQUIVO_DB, backup_name)
+                    st.success(f"âœ… Backup criado com sucesso: `{backup_name}`")
+
+                    # Lista backups existentes
+                    backups = sorted([f for f in os.listdir("backups") if f.endswith(".db")], reverse=True)
+                    st.write("Backups recentes:", backups[:5])
+
+                except Exception as e:
+                    st.error(f"Erro ao criar backup: {e}")
+
+        elif ger_mode == "ðŸ—‘ï¸ Excluir/Editar":
+            tipo_ger = st.radio("Origem:", ["Sisflora", "Plenus"], horizontal=True, key="rad_ger")
+            origem_db = "SISFLORA" if tipo_ger == "Sisflora" else "PLENUS"
+            mapa_atual = carregar_agrupamentos_db(origem_db)
+            grupos_unicos = sorted(list(set(mapa_atual.values())))
+            grp_del = st.selectbox("Selecione o Grupo para EXCLUIR:", [""] + grupos_unicos, key="sel_grp_del")
+            if grp_del:
+                itens_no_grupo = [k for k, v in mapa_atual.items() if v == grp_del]
+                st.dataframe(pd.DataFrame(itens_no_grupo, columns=["Itens"]), use_container_width=True)
+                def deletar_grupo_click():
+                    excluir_grupo_db(grp_del, origem_db)
+                    if tipo_ger == "Sisflora": st.session_state['agrup_sis'] = carregar_agrupamentos_db("SISFLORA")
+                    else: st.session_state['agrup_ple'] = carregar_agrupamentos_db("PLENUS")
+                st.button("ðŸ—‘ï¸ CONFIRMAR EXCLUSÃƒO", type="primary", key="btn_conf_del", on_click=deletar_grupo_click)
+        else:
+            st.markdown("### ðŸ“Š RelatÃ³rio Visual de Agrupamentos")
+            df_rel = carregar_todos_agrupamentos_db()
+            if not df_rel.empty:
+                c1, c2 = st.columns(2)
+                f_cat = c1.multiselect("Filtrar Categoria:", sorted(df_rel['categoria'].unique()))
+                f_orig = c2.multiselect("Filtrar Origem:", sorted(df_rel['origem'].unique()))
+                if f_cat: df_rel = df_rel[df_rel['categoria'].isin(f_cat)]
+                if f_orig: df_rel = df_rel[df_rel['origem'].isin(f_orig)]
+                excel_bytes = to_excel_autoajustado(df_rel)
+                st.download_button("ðŸ“¥ Baixar RelatÃ³rio (Excel .xlsx)", excel_bytes, "relatorio_grupos.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                grupos = sorted(df_rel['nome_grupo'].unique())
+                for g in grupos:
+                    itens = df_rel[df_rel['nome_grupo'] == g]
+                    orig = itens.iloc[0]['origem']
+                    cat = itens.iloc[0]['categoria']
+                    cor = "#007bff" if orig == "SISFLORA" else "#ffc107"
+                    txt = "white" if orig == "SISFLORA" else "black"
+                    st.markdown(f"<div class='grupo-title' style='background-color:{cor}; color:{txt};'>{g} <span style='opacity:0.7; font-size:0.8em; float:right'>({orig} - {cat})</span></div>", unsafe_allow_html=True)
+                    st.dataframe(itens[['item_original']], use_container_width=True, hide_index=True)
+            else: st.info("Nenhum agrupamento salvo ainda.")
+
+# --- 6. CONFERÃŠNCIA & AUDITORIA ---
+elif menu_sel == "6. ConferÃªncia & Auditoria":
+    st.header("âš–ï¸ Resultado Final")
+
+    tab_conf_saldo, tab_conf_auditoria = st.tabs(["COMPARAÃ‡ÃƒO SALDO SISFLORA E SALDO PLENUS", "AUDITORIA DE FLUXO"])
+
+    # --- ABA: SALDO ESTÃTICO ---
+    with tab_conf_saldo:
+        if 'df_sisflora' in st.session_state:
+            st.success("âœ… Saldo Sisflora Carregado")
+        else:
+            st.error("âŒ Saldo Sisflora Pendente (VÃ¡ em '1. Importar Sisflora')")
+
+        if 'df_plenus' in st.session_state:
+            st.success("âœ… Saldo Plenus Carregado")
+        else:
+            st.warning("âš ï¸ Saldo Plenus Pendente (VÃ¡ em '2. Importar Plenus')")
+
+        if 'df_sisflora' in st.session_state and 'df_plenus' in st.session_state:
+            c_conf_1, c_conf_2 = st.columns([2, 2])
+            conf_filter_cat = c_conf_1.radio("Filtrar Categoria:", ["TODAS", "TORAS", "SERRADAS", "BENEFICIADAS"], horizontal=True, key="rad_conf_cat")
+            conf_search = c_conf_2.text_input("ðŸ”Ž Pesquisar Grupo:")
+
+            df_s = st.session_state['df_sisflora'].copy()
+            df_s['Grupo'] = df_s['Item_Completo'].map(st.session_state['agrup_sis'])
+            df_s = df_s.dropna(subset=['Grupo'])
+            res_s = df_s.groupby('Grupo')['Volume Disponivel'].sum().reset_index()
+
+            df_p = st.session_state['df_plenus'].copy()
+            if 'Item_Completo' not in df_p.columns:
+                 # FIX v181: Match old logic "Produto (Categoria)"
+                 df_p['Item_Completo'] = df_p["produto"] + " (" + df_p["categoria"].fillna("") + ")"
+
+            if 'data_movimento' in df_p.columns:
+                # Add check for 'id' to avoid crash if loading from HTML (which has no id)
+                cols_sort = ['data_movimento']
+                if 'id' in df_p.columns: cols_sort.append('id')
+                df_p = df_p.sort_values(by=cols_sort, ascending=[False, False] if 'id' in df_p.columns else [False])
+
+            df_p_last = df_p.drop_duplicates(subset=['sku'], keep='first').copy()
+            df_p_last['Grupo_Inter'] = df_p_last['Item_Completo'].map(st.session_state['agrup_ple'])
+            vinculos = st.session_state['vinculos']
+            df_p_last['Grupo_Calc'] = df_p_last['Grupo_Inter'].map(vinculos)
+            df_p_last['Grupo_Calc'] = df_p_last['Grupo_Calc'].fillna(df_p_last['Grupo_Inter'])
+            df_p_last = df_p_last.dropna(subset=['Grupo_Calc'])
+
+            col_saldo = 'saldo_apos' if 'saldo_apos' in df_p_last.columns else 'saldo'
+            if col_saldo in df_p_last.columns:
+                df_p_last[col_saldo] = pd.to_numeric(df_p_last[col_saldo], errors='coerce').fillna(0)
+
+            res_p = df_p_last.groupby('Grupo_Calc')[col_saldo].sum().reset_index()
+
+            res_s.columns = ['Grupo', 'Vol_Sis']
+            res_p.columns = ['Grupo', 'Vol_Ple']
+
+            df_final = pd.merge(res_s, res_p, on='Grupo', how='outer').fillna(0)
+            df_final['Diferenca'] = df_final['Vol_Sis'] - df_final['Vol_Ple']
+
+            if conf_search: df_final = df_final[df_final['Grupo'].str.contains(conf_search, case=False, na=False)]
+
+            def highlight_diff(val):
+                color = 'green' if abs(val) < 0.01 else ('red' if val < 0 else 'blue')
+                return f'color: {color}; font-weight: bold'
+
+            def fmt_br_val(x):
+                return f"{x:,.4f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+            st.dataframe(
+                df_final.style.format(fmt_br_val, subset=['Vol_Sis', 'Vol_Ple', 'Diferenca'])
+                .map(highlight_diff, subset=['Diferenca']),
+                use_container_width=True, height=600
+            )
+
+    # --- ABA: AUDITORIA DE FLUXO ---
+    with tab_conf_auditoria:
+        st.markdown("##### ðŸ“… Defina o PerÃ­odo de AnÃ¡lise")
+        st.caption("O sistema irÃ¡ buscar no banco de dados todas as movimentaÃ§Ãµes dentro destas datas.")
+        c_dt1, c_dt2 = st.columns(2)
+        dt_ini_aud = c_dt1.date_input("Data InÃ­cio:", value=st.session_state['aud_dt_ini'], key="aud_i", format="DD/MM/YYYY", on_change=save_app_state)
+        dt_fim_aud = c_dt2.date_input("Data Fim:", value=st.session_state['aud_dt_fim'], key="aud_f", format="DD/MM/YYYY", on_change=save_app_state)
+        st.session_state['aud_dt_ini'] = dt_ini_aud
+        st.session_state['aud_dt_fim'] = dt_fim_aud
+
+        if st.button("ðŸš€ Processar Auditoria"):
+            with st.spinner("Cruzando dados do Sistransf, SisConsumo e Plenus..."):
+                df_transf = carregar_transf_filtrado_db(dt_ini_aud, dt_fim_aud)
+                df_consumo = carregar_consumo_filtrado_db(dt_ini_aud, dt_fim_aud)
+
+                # FIX V175
+                cols_padrao = ['produto', 'essencia', 'volume']
+                for c in cols_padrao:
+                    if c not in df_consumo.columns:
+                        df_consumo[c] = "" if c != 'volume' else 0.0
+
+                df_plenus_mov = carregar_plenus_movimento_db(dt_ini_aud, dt_fim_aud)
+
+                saldo_aud_sis = {}
+                agrup_sis = st.session_state['agrup_sis']
+                vinculos = st.session_state['vinculos']
+
+                if not df_transf.empty:
+                    gerados = df_transf[df_transf['tipo_produto'] == 'PRODUTO GERADO'].copy()
+                    if not gerados.empty:
+                         gerados['Item_Check'] = gerados.apply(lambda x: f"{x['produto']} - {x['essencia']}" if x['essencia'] else x['produto'], axis=1)
+                         gerados['Grupo'] = gerados['Item_Check'].map(agrup_sis)
+                         gerados['Grupo'] = gerados['Grupo'].fillna(gerados['Item_Check'])
+
+                         for _, r in gerados.iterrows():
+                             if pd.notnull(r['Grupo']):
+                                 if r['Grupo'] not in saldo_aud_sis: saldo_aud_sis[r['Grupo']] = {'Entrada': 0, 'Saida': 0}
+                                 saldo_aud_sis[r['Grupo']]['Entrada'] += r['volume']
+
+                    origens = df_transf[df_transf['tipo_produto'] == 'PRODUTO DE ORIGEM'].copy()
+                    if not origens.empty:
+                         origens['Item_Check'] = origens.apply(lambda x: f"{x['produto']} - {x['essencia']}" if x['essencia'] else x['produto'], axis=1)
+                         origens['Grupo'] = origens['Item_Check'].map(agrup_sis)
+                         origens['Grupo'] = origens['Grupo'].fillna(origens['Item_Check'])
+
+                         for _, r in origens.iterrows():
+                             if pd.notnull(r['Grupo']):
+                                 if r['Grupo'] not in saldo_aud_sis: saldo_aud_sis[r['Grupo']] = {'Entrada': 0, 'Saida': 0}
+                                 saldo_aud_sis[r['Grupo']]['Saida'] += r['volume']
+
+                if not df_consumo.empty:
+                    df_consumo['Item_Check'] = df_consumo.apply(lambda x: f"{x.get('produto','')} - {x.get('essencia','')}" if x.get('essencia') else x.get('produto',''), axis=1)
+                    df_consumo['Grupo'] = df_consumo['Item_Check'].map(agrup_sis)
+                    df_consumo['Grupo'] = df_consumo['Grupo'].fillna(df_consumo['Item_Check'])
+
+                    for _, r in df_consumo.iterrows():
+                         if pd.notnull(r['Grupo']):
+                             if r['Grupo'] not in saldo_aud_sis: saldo_aud_sis[r['Grupo']] = {'Entrada': 0, 'Saida': 0}
+                             vol = r.get('volume', 0)
+                             try: vol = float(vol)
+                             except: vol = 0
+                             saldo_aud_sis[r['Grupo']]['Saida'] += vol
+
+                saldo_aud_ple = {}
+                agrup_ple = st.session_state['agrup_ple']
+
+                if not df_plenus_mov.empty:
+                    # FIX v181: Match old logic "Produto (Categoria)"
+                    df_plenus_mov['Item_Completo'] = df_plenus_mov["produto"] + " (" + df_plenus_mov["categoria"].fillna("") + ")"
+                    df_plenus_mov['Grupo_Inter'] = df_plenus_mov['Item_Completo'].map(agrup_ple)
+                    df_plenus_mov['Grupo_Calc'] = df_plenus_mov['Grupo_Inter'].map(vinculos)
+                    df_plenus_mov['Grupo_Calc'] = df_plenus_mov['Grupo_Calc'].fillna(df_plenus_mov['Grupo_Inter'])
+
+                    for _, r in df_plenus_mov.iterrows():
+                        if pd.notnull(r['Grupo_Calc']):
+                            grp = r['Grupo_Calc']
+                            if grp not in saldo_aud_ple: saldo_aud_ple[grp] = {'Entrada': 0, 'Saida': 0}
+                            saldo_aud_ple[grp]['Entrada'] += r['entrada']
+                            saldo_aud_ple[grp]['Saida'] += r['saida']
+
+                todos_grupos = set(saldo_aud_sis.keys()) | set(saldo_aud_ple.keys())
+                relatorio = []
+                for g in todos_grupos:
+                    s_ent = saldo_aud_sis.get(g, {'Entrada': 0})['Entrada']
+                    s_sai = saldo_aud_sis.get(g, {'Saida': 0})['Saida']
+                    s_liq = s_ent - s_sai
+                    p_ent = saldo_aud_ple.get(g, {'Entrada': 0})['Entrada']
+                    p_sai = saldo_aud_ple.get(g, {'Saida': 0})['Saida']
+                    p_liq = p_ent - p_sai
+                    diff = s_liq - p_liq
+
+                    if any(abs(x) > 0.0001 for x in [s_ent, s_sai, s_liq, p_ent, p_sai, p_liq]):
+                        relatorio.append({
+                            "Grupo": g,
+                            "Sis_Entrada": s_ent, "Sis_Saida": s_sai, "Sis_Liquido": s_liq,
+                            "Ple_Entrada": p_ent, "Ple_Saida": p_sai, "Ple_Liquido": p_liq,
+                            "Diferenca_Mov": diff
+                        })
+
+                df_rel = pd.DataFrame(relatorio)
+
+                # Funcao de estilo manual sem matplotlib
+                def style_difference(v):
+                    if abs(v) < 0.01:
+                        return 'background-color: #d4edda; color: #155724' # Verde claro
+                    elif v < 0:
+                        return 'background-color: #f8d7da; color: #721c24' # Vermelho claro
+                    else:
+                        return 'background-color: #cce5ff; color: #004085' # Azul claro
+
+                if not df_rel.empty:
+                    render_filtered_table(df_rel, "aud_result", show_total=True)
+                else:
+                    st.info("Nenhuma movimentaÃ§Ã£o encontrada neste perÃ­odo.")

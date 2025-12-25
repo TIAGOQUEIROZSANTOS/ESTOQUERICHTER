@@ -1,0 +1,640 @@
+{
+  "timestamp": "2025-12-25T20:21:02.389003",
+  "fonte": "HTML_IMPORTADO",
+  "arquivo": "TESTE",
+  "total_skus": 79,
+  "skus_detalhado": {
+    "001032": {
+      "sku": "001032",
+      "produto": "ABIU  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "023651": {
+      "sku": "023651",
+      "produto": "ABIURANA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001002": {
+      "sku": "001002",
+      "produto": "AMAPA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001007": {
+      "sku": "001007",
+      "produto": "ANGELIM AMARGOSO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 798.7034,
+      "saldo_m3_formatado": "798,7034"
+    },
+    "001009": {
+      "sku": "001009",
+      "produto": "ANGELIM FERRO  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001008": {
+      "sku": "001008",
+      "produto": "ANGELIM PEDRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 1131.426,
+      "saldo_m3_formatado": "1.131,4260"
+    },
+    "001042": {
+      "sku": "001042",
+      "produto": "ANGELIM SAIA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013326": {
+      "sku": "013326",
+      "produto": "BAJÃO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001027": {
+      "sku": "001027",
+      "produto": "CAIXETA. EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.698,
+      "saldo_m3_formatado": "0,6980"
+    },
+    "004017": {
+      "sku": "004017",
+      "produto": "CAJUEIRO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0001,
+      "saldo_m3_formatado": "0,0001"
+    },
+    "001005": {
+      "sku": "001005",
+      "produto": "CAMBARA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 312.2899,
+      "saldo_m3_formatado": "312,2899"
+    },
+    "013330": {
+      "sku": "013330",
+      "produto": "CAMBARÁ ROSA",
+      "categoria": "",
+      "cat_auto": "OUTROS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013331": {
+      "sku": "013331",
+      "produto": "CANELA-FEDIDA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.001,
+      "saldo_m3_formatado": "0,0010"
+    },
+    "001010": {
+      "sku": "001010",
+      "produto": "CANELAO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 1.99,
+      "saldo_m3_formatado": "1,9900"
+    },
+    "001044": {
+      "sku": "001044",
+      "produto": "CAROBA-PARAPARA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013332": {
+      "sku": "013332",
+      "produto": "CATUABA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 13.48,
+      "saldo_m3_formatado": "13,4800"
+    },
+    "001041": {
+      "sku": "001041",
+      "produto": "CAUCHO  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.005,
+      "saldo_m3_formatado": "0,0050"
+    },
+    "001014": {
+      "sku": "001014",
+      "produto": "CEDRINHO  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001011": {
+      "sku": "001011",
+      "produto": "CEDRO  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001250": {
+      "sku": "001250",
+      "produto": "CEDRO ALAGOANO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "020370": {
+      "sku": "020370",
+      "produto": "CEDRO ALAGOANO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 46.1263,
+      "saldo_m3_formatado": "46,1263"
+    },
+    "001012": {
+      "sku": "001012",
+      "produto": "CEDRO ROSA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 435.9491,
+      "saldo_m3_formatado": "435,9491"
+    },
+    "001025": {
+      "sku": "001025",
+      "produto": "CEDRO-MARINHEIRO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.001,
+      "saldo_m3_formatado": "0,0010"
+    },
+    "001206": {
+      "sku": "001206",
+      "produto": "CEREJEIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "002207": {
+      "sku": "002207",
+      "produto": "CHAMPANHE EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "004015": {
+      "sku": "004015",
+      "produto": "COPAIBA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 22.397,
+      "saldo_m3_formatado": "22,3970"
+    },
+    "001004": {
+      "sku": "001004",
+      "produto": "COPIUBA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 18.7975,
+      "saldo_m3_formatado": "18,7975"
+    },
+    "001013": {
+      "sku": "001013",
+      "produto": "CUMARU EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013442": {
+      "sku": "013442",
+      "produto": "CUMARU EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 30.756,
+      "saldo_m3_formatado": "30,7560"
+    },
+    "004016": {
+      "sku": "004016",
+      "produto": "EMBIREIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013329": {
+      "sku": "013329",
+      "produto": "FARINHA SECA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.006,
+      "saldo_m3_formatado": "0,0060"
+    },
+    "001030": {
+      "sku": "001030",
+      "produto": "FAVA ORELHA DE MACACO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 486.1874,
+      "saldo_m3_formatado": "486,1874"
+    },
+    "001015": {
+      "sku": "001015",
+      "produto": "FAVEIRA DURA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013325": {
+      "sku": "013325",
+      "produto": "FREIJÓ EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001016": {
+      "sku": "001016",
+      "produto": "GARAPEIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 804.93,
+      "saldo_m3_formatado": "804,9300"
+    },
+    "001017": {
+      "sku": "001017",
+      "produto": "GARROTE EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 2190.8063,
+      "saldo_m3_formatado": "2.190,8063"
+    },
+    "001019": {
+      "sku": "001019",
+      "produto": "GOIABAO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 26.664,
+      "saldo_m3_formatado": "26,6640"
+    },
+    "017137": {
+      "sku": "017137",
+      "produto": "GUAPEVA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 28.08,
+      "saldo_m3_formatado": "28,0800"
+    },
+    "020949": {
+      "sku": "020949",
+      "produto": "GUAPEVA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 3.757,
+      "saldo_m3_formatado": "3,7570"
+    },
+    "001018": {
+      "sku": "001018",
+      "produto": "GUARITA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 716.3152,
+      "saldo_m3_formatado": "716,3152"
+    },
+    "017136": {
+      "sku": "017136",
+      "produto": "INGAZEIRO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001020": {
+      "sku": "001020",
+      "produto": "IPE AMARELO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 59.638,
+      "saldo_m3_formatado": "59,6380"
+    },
+    "019655": {
+      "sku": "019655",
+      "produto": "IPE EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "019910": {
+      "sku": "019910",
+      "produto": "IPE EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 466.4855,
+      "saldo_m3_formatado": "466,4855"
+    },
+    "019654": {
+      "sku": "019654",
+      "produto": "ITAPICURU EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 366.531,
+      "saldo_m3_formatado": "366,5310"
+    },
+    "001021": {
+      "sku": "001021",
+      "produto": "ITAUBA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 216.112,
+      "saldo_m3_formatado": "216,1120"
+    },
+    "001022": {
+      "sku": "001022",
+      "produto": "JATOBA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 1217.603,
+      "saldo_m3_formatado": "1.217,6030"
+    },
+    "001023": {
+      "sku": "001023",
+      "produto": "JEQUITIBA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "017139": {
+      "sku": "017139",
+      "produto": "JUTAI-POROROCA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001028": {
+      "sku": "001028",
+      "produto": "MANDIOQUEIRO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "002478": {
+      "sku": "002478",
+      "produto": "MARACATIARA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 10.563,
+      "saldo_m3_formatado": "10,5630"
+    },
+    "023652": {
+      "sku": "023652",
+      "produto": "MARUPA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001024": {
+      "sku": "001024",
+      "produto": "MAÇARANDUBA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "017138": {
+      "sku": "017138",
+      "produto": "MAÇARANDUBA VERMELHA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 303.289,
+      "saldo_m3_formatado": "303,2890"
+    },
+    "001006": {
+      "sku": "001006",
+      "produto": "MESCLA AROEIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 1371.6649,
+      "saldo_m3_formatado": "1.371,6649"
+    },
+    "001026": {
+      "sku": "001026",
+      "produto": "MIRINDIBA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 489.849,
+      "saldo_m3_formatado": "489,8490"
+    },
+    "001043": {
+      "sku": "001043",
+      "produto": "MORCEGUEIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.011,
+      "saldo_m3_formatado": "0,0110"
+    },
+    "001029": {
+      "sku": "001029",
+      "produto": "OITICICA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "002548": {
+      "sku": "002548",
+      "produto": "PARAJU EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "007690": {
+      "sku": "007690",
+      "produto": "PEQUIARANA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013443": {
+      "sku": "013443",
+      "produto": "PEQUIARANA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 1159.4082,
+      "saldo_m3_formatado": "1.159,4082"
+    },
+    "001031": {
+      "sku": "001031",
+      "produto": "PEROBA MICA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.01,
+      "saldo_m3_formatado": "0,0100"
+    },
+    "021001": {
+      "sku": "021001",
+      "produto": "PEROBA-ROSA ASPIDOSPERMA POLYNEURON EM TORAS DE MADEIRA NATI",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0002,
+      "saldo_m3_formatado": "0,0002"
+    },
+    "013327": {
+      "sku": "013327",
+      "produto": "PINHO-CUIABANO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013328": {
+      "sku": "013328",
+      "produto": "PIRIQUITEIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "020950": {
+      "sku": "020950",
+      "produto": "PIRIQUITEIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001033": {
+      "sku": "001033",
+      "produto": "ROXINHO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0054,
+      "saldo_m3_formatado": "0,0054"
+    },
+    "001040": {
+      "sku": "001040",
+      "produto": "SORVEIRA  EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001034": {
+      "sku": "001034",
+      "produto": "SUCUPIRA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 519.874,
+      "saldo_m3_formatado": "519,8740"
+    },
+    "023650": {
+      "sku": "023650",
+      "produto": "SUCUPIRA-AMARELA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "023649": {
+      "sku": "023649",
+      "produto": "SUCUPIRA-PRETA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "013324": {
+      "sku": "013324",
+      "produto": "SUMAUMA EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001037": {
+      "sku": "001037",
+      "produto": "TACHI EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 216.5422,
+      "saldo_m3_formatado": "216,5422"
+    },
+    "022426": {
+      "sku": "022426",
+      "produto": "TACHI EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001035": {
+      "sku": "001035",
+      "produto": "TAMARINDO EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001038": {
+      "sku": "001038",
+      "produto": "TAMBURI EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 185.1123,
+      "saldo_m3_formatado": "185,1123"
+    },
+    "001036": {
+      "sku": "001036",
+      "produto": "TAUARI EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 17.2069,
+      "saldo_m3_formatado": "17,2069"
+    },
+    "015043": {
+      "sku": "015043",
+      "produto": "TAXI EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    },
+    "001039": {
+      "sku": "001039",
+      "produto": "UCHI EM TOROS",
+      "categoria": "",
+      "cat_auto": "TORAS",
+      "saldo_m3": 0.0,
+      "saldo_m3_formatado": "0,0000"
+    }
+  }
+}
